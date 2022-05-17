@@ -1,13 +1,20 @@
+{% set timeoff = "COALESCE(tot.hours, 0)" %}
+{% set net_scheduled = "GREATEST(pt.hours - " ~ timeoff ~ ", 0)" %}
+{% set logged = "COALESCE(lt.hours, 0)" %}
+
 SELECT
-	pt.date_day,
+	{{ dbt_utils.surrogate_key(['pt.date_day', 'pt.project_id', 'pt.people_id']) }} AS id,
+	pt.date_day AS date,
 	pt.project_id,
 	pt.people_id,
 	pt.department__name,
--- 	pt.hours AS scheduled,
--- 	tot.hours AS timeoff,
-	GREATEST(pt.hours - COALESCE(tot.hours, 0), 0) AS worked,
-	COALESCE(lt.hours, 0) AS logged,
-	pr.hourly_rate
+	pt.hours AS scheduled,
+	{{ timeoff }} AS timeoff,
+	{{ net_scheduled }} AS net_scheduled,
+	{{ logged }} AS logged,
+	pr.hourly_rate,
+	ROUND(({{ net_scheduled }} * hourly_rate)::numeric, 2) AS net_scheduled_budget,
+	ROUND(({{ logged }} * hourly_rate)::numeric, 2) AS logged_budget
 FROM
 	{{ ref('date_spine') }} ds
 	JOIN {{ ref('project_time') }} pt ON ds.date_day = pt.date_day
