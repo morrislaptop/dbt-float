@@ -1,6 +1,6 @@
 {% set timeoff = "COALESCE(tot.hours, 0)" %}
 {% set net_scheduled = "GREATEST(pt.hours - " ~ timeoff ~ ", 0)" %}
-{% set logged = "COALESCE(lt.hours, 0)" %}
+{% set logged = "lt.hours" %} -- leave as null
 
 SELECT
 	{{ dbt_utils.surrogate_key(['pt.date_day', 'pt.project_id', 'pt.people_id']) }} AS id,
